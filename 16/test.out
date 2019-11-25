@@ -1,0 +1,22 @@
+loop #1
+loop #2
+loop #3
+loop #4
+loop #5
+loop #6
+loop #7
+loop #8
+loop #9
+loop #10
+loop #11
+loop #12
+loop #13
+loop #14
+loop #15
+loop #16
+loop #17
+loop #18
+loop #19
+loop #20
+test script is complete
+这样做将输出跟shell命令混杂在一起十分的不方便所以我们需要将脚本的标准输入输出放到某个文件中进行重定向
