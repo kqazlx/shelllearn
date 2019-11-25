@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<!--上边的doctype 文档的类型声明  用什么样的标准来解析这个文档  好几种写法  以后就写这个就可以了-->
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<!--  搜索关键字  内容描述网页字符编码  可以对搜索引擎友好 号让爬虫爬取 -->
+		<title>第一个网页</title>
+		<!--标签组成的页面  标题标签 变迁的格式  有开头有结尾-->
+		<!--必须用英文-->
+		<!-- 必须一英文字符开头 不能用中文 空格特殊字符等-->
+	</head>
+	<body>
+		kqazlx is a goodman
+		<a href="#mao1">跳转锚点</a>
+		<!-- 注释标签-->
+		<!--标题标签-->
+		<h1> kqazlx is a goodman</h1>
+		<h2> kqazlx is a goodman</h2>
+		<h3> kqazlx is a goodman</h3>
+		<!--换行标签  为什么需要他 因为手动换行不生效-->
+		kqazlx is a goodman <br /> kqazlx is a goodman <br /></bdi> kqazlx is a goodman
+		<!-- 段落标签 P-->
+		<p>段落标签 这里使用的就是p 的段落标签 大家可以一起看一个 我们的天啊 大家都来啊你看看我的天啊    努力吧骚年  </p>
+		<!--水平线标签-->
+		<hr  />
+		<!--字体样式标签-->
+		
+		<strong> suck is a googd man </strong> <br>
+			<!--语气的加强 其实没有什么大区别-->
+		<b> sunck is a good man </b> <br>
+			<!--样式的加粗-->
+		
+		<!--倾斜标签-->
+		
+		<em>sunck is a good man  </em> <br>
+		<i> sunck is a good man</i>
+		
+		<!--特殊符号-->
+			<!--空格标签-->
+		<p> sunck      &nbsp;    &nbsp;&nbsp;&nbsp;&nbsp;       is a nice man </p>
+			<!--圆角的空格可以显示成空格  尽量不用-->
+		<p> sunck     is a good man</p>
+		&gt;
+		<!--大鱼号-->
+		&lt;
+		
+		<!--小于号-->
+		&quot;
+		<!--引号-->
+		&copy; 
+		<!--版权符号-->
+		<hr >
+		<!--图像标签-->
+		<!--常用的图像格式  jpg  gif  png  bmp-->
+		<!--png 有些不支持 老浏览器-->
+		<img  src="img/1.jpg" alt="mayi" title="damayi" width="500" height="500" />
+		<!--alt 加载失败的时候显示  title 鼠标放上去后显示-->
+		
+		<!--连接标签-->
+		<a href="https://www.baidu.com">baidu一下</a>
+		<a href="img/1.jpg">大蚂蚁</a>
+		<a href="https://www.baidu.com"><img src="img/1.jpg"></a>
+		
+		<!--常用的超链接-->
+		<!--一个连接 到另一个页面-->
+		<!--锚链接？-->
+		
+		<a name="mao1"></a>
+		<!--锚点的跳转-->
+		<!--功能性连接-->
+		
+		<!--列表-->
+		 <!--无序列表 有序列表 自定义列表-->
+		 
+		 无序列表
+		 注意列表属性中的type 标识列表前边的样式点
+		 <ul>
+		 	<li type="square"><a href="https://www.baidu.com">测试 </a>1</li>
+			<li>2</li>		 	
+		 	<li>3</li>
+		 </ul>
+		<hr>
+		有序里列表
+		<ol type="1">
+			<li>sunck is a goog man </li>
+			<li>dajiahao a </li>
+			<li> nimen hao a </li>
+		</ol>
+		<br>
+		自定义列表
+		<dl>
+			<dt> 1 </dt>
+			<dt>2</dt>
+			<dt>3</dt>
+		</dl>
+		
+		<!--表格-->
+		
+		为什么用表格  简单通用结构稳定  基本结构 单元格 列 表
+		tr 行
+		td 列
+		
+		对齐方式
+		跨行和跨列
+		<table align="center" border="1" cellpadding="10" cellspacing="12">
+			<tr><th>表头</th>
+				<th>表头</th>
+				
+				<th>表头</th>
+				
+				
+			</tr>
+			
+			
+			
+			
+			<tr >
+				<td colspan="2">第一行第二列</td>
+				<td>第一行第一列</td>
+				<!--<td>第一行第三列</td>-->
+			</tr>
+			<tr>
+				<td>第二行第二列</td>
+				<td>第二行第一列</td>
+				<td rowspan="2">第二行第三列</td>
+			</tr>
+			<tr>
+				<td>第三行第二列</td>
+				<td>第三行第一列</td>
+				<!--<td>第三行第三列</td>-->
+			</tr>
+			
+			
+		</table>
+		
+		
+		
+		
+		
+		
+		
+		
+	</body>
+</html>
