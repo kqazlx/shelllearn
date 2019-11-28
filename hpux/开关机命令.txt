@@ -1,0 +1,12 @@
+hpux操作系统的关机与重启命令
+2014-07-30 23:35:03 msdnchina 阅读数 13152更多
+分类专栏： HP-UX
+版权声明：本文为博主原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
+本文链接：https://blog.csdn.net/msdnchina/article/details/38308829
+关机 
+shutdown -hy 0
+
+重启：
+shutdown -ry 0
+
+文章

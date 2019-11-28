@@ -1,0 +1,217 @@
+
+在划存储的时候将 存储的lun名称和wwn号码（按循序）记录下来
+
+
+1.可以在2台主机上通过查看wwn，wwn一致的为同一个盘，也可以通过它与存储划得每个lun对应起来
+
+scsimgr -p get_attr all_lun -a hw_path -a device_file -a wwid
+
+2.通过ioinit来修改，具体过程如下：
+
+备份先：备份ioconfig及ioscan的输出
+
+
+
+insf -e -C disk扫描新盘
+ioscan -fnC disk 查看当前可用的磁盘
+ioscan -N -fknCdisk 显示永久设备名
+ioscan -m lun 显示永久设备名
+ioscan -m dsf 查看永久设备名和旧设备名之间的对应关系
+ioscan -P health -C disk 检查磁盘设备online状态
+rmsf 加上设备名全路径 删除现有设备名称
+rmsf -L 取消旧设备名
+ioscan -funCdisk
+insf -L 回复旧的设备名
+
+ioscan -funCdisk
+
+
+1、修改磁盘的instance number
+
+生成需要执行的文件instance.file有可能是infile文件  然后编辑这个文件只保留下需要修改的磁盘，然后将磁盘号修改成自己想变成的样子
+ioscan -kNf | grep ^disk | awk '{printf "%s %s %s\n",$3,$1,$2}' > instance.file
+ioscan -kf | grep ^disk | awk '{printf "%s %s %s\n",$3,$1,$2}' >> instance.file
+执行 ioinit -f infile或者instance.file 系统执行变动
+然后在查看磁盘信息 
+ioscan -funCdisk
+现在已经变成想要的样子 注意这种修改方式是有缺陷的 有很多的instance number 已经存在 那么你就改不了了 然后你就用下边的修改磁盘名称的方式
+
+
+
+2、更改设备名称
+删除原有的设备名称 # rmsf /dev/disk/disk5 /dev/rdisk/disk5
+ioscan -m lun 查看路径
+
+新建设备名称 第一个新建块设备名
+# mksf -C disk -I 5 /dev/disk/disk4
+新建字符设备名称
+# mksf -C disk -I 5 -r /dev/rdisk/disk4
+查看lun 对应的设备名称
+ ioscan -m lun 
+如果更换硬盘，还想使用原来的设备名，可以使用io_redirect_dsf命令。因为换上的新硬盘，系统会分配一个新的设备名。
+# io_redirect_dsf –d /dev/disk/disk3 –n /dev/disk/disk1
+
+
+
+
+
+
+
+
+
+HPUX 11.31已经于2007年2月正式发布了，目前国内使用的还不多，但是很快就会我们要主要support的版本了。V3版本的一个最大的变化就是磁盘设备名（device special file－DSF)
+的变化，采用简洁的称为永久设备名（Persistent device special files)，即类似于Tru64及AIX的diskn的名称方式，尽管为了兼容性，还保留了传统的硬件路径式的命名方式（即cXtYdZ）。
+
+V3以前的版本采用的是legacy DSF，翻译过来的中文系统管理里称为旧设备文件，总是感觉不那么贴切，只是字面意思，如果我们看了中文会以为英文原来可能是old DSF呢。这种名字是和硬件路径绑定的，如/dev/dsk/c3t15d0，是Instance 3， SCSI ID 15，LUN 0。如果采用这种命名方式，对应每一条物理路径就会有一个设备名，对于XP磁盘阵列上的一个lun或者EVA上的Vdisk就可能有8条路径之多（对于V2系统一个LUN最多支持8个路径，V3可以32个），并且如果San环境变化，如换HBA卡，改变Switch Domain ID等还会引起设备名的改变。由于多路径，考虑IO问题，于是有了Secure Path或者Auto Path这样的软件。
+
+V3采用永久设备名后，这些问题变得简单了，如/dev/disk/disk3，对于一个lun只有一个设备名，并且不再和物理路径绑定，而是和LUN的 WorldWide Identifier (WWID)绑定，只要WWID不变，设备名就不变，把物理设备拔掉再插回也不变，新加入的设备只会分配新的设备名。不再需要多路径软件了，能自动实现load balance功能，如果链路失败系统会取消该链路，当发现新链路时自动发现并加入load balance。下面介绍针对永久设备名的出现几个命令的使用。
+
+一， ioscan的用法
+# ioscan -N –fknCdisk 显示永久设备名
+Class I H/W Path Driver S/W State H/W Type Description
+===================================================================
+disk 2 64000/0xfa00/0x0 esdisk CLAIMED DEVICE TEAC DV-28E-
+C
+/dev/disk/disk2 /dev/rdisk/disk2
+disk 3 64000/0xfa00/0x1 esdisk CLAIMED DEVICE HP 36.4GST33675
+3LC
+/dev/disk/disk3 /dev/rdisk/disk3
+/dev/disk/disk3_p1 /dev/rdisk/disk3_p1
+/dev/disk/disk3_p2 /dev/rdisk/disk3_p2
+/dev/disk/disk3_p3 /dev/rdisk/disk3_p3
+disk 5 64000/0xfa00/0x5 esdisk CLAIMED DEVICE HP 36.4GST33675
+3LC
+/dev/disk/disk5 /dev/rdisk/disk5
+# ioscan -m lun 显示永久设备名
+Class I Lun H/W Path Driver S/W State H/W Type Health Description
+======================================================================
+disk 2 64000/0xfa00/0x0 esdisk CLAIMED DEVICE online TEAC
+DV-28E-C
+0/0/2/0.0.0x0.0x0
+/dev/disk/disk2 /dev/rdisk/disk2
+disk 3 64000/0xfa00/0x1 esdisk CLAIMED DEVICE online HP 36.4
+GST336753LC
+0/1/1/0.0x1.0x0
+/dev/disk/disk3 /dev/rdisk/disk3
+/dev/disk/disk3_p1 /dev/rdisk/disk3_p1
+/dev/disk/disk3_p2 /dev/rdisk/disk3_p2
+/dev/disk/disk3_p3 /dev/rdisk/disk3_p3
+disk 5 64000/0xfa00/0x5 esdisk CLAIMED DEVICE online HP 36.4
+GST336753LC
+0/1/1/1.0x2.0x0
+/dev/disk/disk5 /dev/rdisk/disk5
+/dev/disk/disk5_p1 /dev/rdisk/disk5_p1
+/dev/disk/disk5_p2 /dev/rdisk/disk5_p2
+/dev/disk/disk5_p3 /dev/rdisk/disk5_p3
+
+# ioscan -m dsf 查看永久设备名和旧设备名之间的对应关系
+Persistent DSF Legacy DSF(s)
+========================================
+/dev/rdisk/disk2 /dev/rdsk/c0t0d0
+/dev/rdisk/disk3 /dev/rdsk/c2t1d0
+/dev/rdisk/disk3_p1 /dev/rdsk/c2t1d0s1
+/dev/rdisk/disk3_p2 /dev/rdsk/c2t1d0s2
+/dev/rdisk/disk3_p3 /dev/rdsk/c2t1d0s3
+/dev/rdisk/disk5 /dev/rdsk/c3t2d0
+
+# ioscan -P health -C disk 检查磁盘online状态
+Class I H/W Path health
+===============================
+disk 2 64000/0xfa00/0x0 online
+disk 3 64000/0xfa00/0x1 online
+disk 5 64000/0xfa00/0x5 online
+
+# rmsf –L 取消旧设备命
+WARNING: This command may be disruptive to the system.
+Before running this command, make sure you have first run
+iofind(1M) and migrated all applications using legacy device
+special files. Please refer to the man page of rmsf(1M) to
+verify the possible side effects of the option '-L'.
+Do you want to continue ?
+(You must respond with 'y' or 'n'.): y
+rmsf: Legacy mode has been successfully disabled
+# ioscan -funCdisk
+# insf –L 恢复旧设备名
+This command will re-install all legacy I/O nodes and legacy DSFs.
+Do you want to continue ?
+(You must respond with 'y' or 'n'.): y
+insf: Legacy mode has been successfully enabled
+# ioscan -funCdisk
+Class I H/W Path Driver S/W State H/W Type Description
+=======================================================================
+disk 1 0/0/2/0.0.0.0 sdisk CLAIMED DEVICE TEAC DV-28E-C
+/dev/dsk/c0t0d0 /dev/rdsk/c0t0d0
+disk 0 0/1/1/0.1.0 sdisk CLAIMED DEVICE HP 36.4GST336753LC
+/dev/dsk/c2t1d0 /dev/rdsk/c2t1d0
+/dev/dsk/c2t1d0s1 /dev/rdsk/c2t1d0s1
+/dev/dsk/c2t1d0s2 /dev/rdsk/c2t1d0s2
+/dev/dsk/c2t1d0s3 /dev/rdsk/c2t1d0s3
+disk 4 0/1/1/1.2.0 sdisk CLAIMED DEVICE HP 36.4GST336753LC
+/dev/dsk/c3t2d0 /dev/rdsk/c3t2d0
+
+如果采用永久设备名，在做vgimport时，需要使用新参数N，否则将使用旧设备文件名。
+# vgimport -s -m /tmp/vgdata.map -N vgdata
+vgimport: Volume group "/dev/vgdata" has been successfully created.
+Warning: A backup of this volume group may not exist on this machine.
+Please remember to take a backup using the vgcfgbackup command after activating
+the volume group.
+
+# strings /etc/lvmtab
+/dev/vg00
+/dev/disk/disk3_p2
+/dev/vgdata
+/dev/disk/disk5
+# vgimport -s -m /tmp/vgdata.map vgdata
+vgimport: Volume group "/dev/vgdata" has been successfully created.
+Warning: A backup of this volume group may not exist on this machine.
+Please remember to take a backup using the vgcfgbackup command after activating
+the volume group.
+# strings /etc/lvmtab
+/dev/vg00
+/dev/disk/disk3_p2
+/dev/vgdata
+/dev/dsk/c3t2d0
+
+改变设备名，如将disk5――>disk4,先删除原来的设备名，再生成新的设备名。
+# rmsf /dev/disk/disk5 /dev/rdisk/disk5
+# ioscan -m lun
+Class I Lun H/W Path Driver S/W State H/W Type Health Description
+======================================================================
+disk 2 64000/0xfa00/0x0 esdisk CLAIMED DEVICE online TEAC
+DV-28E-C
+0/0/2/0.0.0x0.0x0
+/dev/disk/disk2 /dev/rdisk/disk2
+disk 3 64000/0xfa00/0x1 esdisk CLAIMED DEVICE online HP 36.4
+GST336753LC
+0/1/1/0.0x1.0x0
+/dev/disk/disk3 /dev/rdisk/disk3
+/dev/disk/disk3_p1 /dev/rdisk/disk3_p1
+/dev/disk/disk3_p2 /dev/rdisk/disk3_p2
+/dev/disk/disk3_p3 /dev/rdisk/disk3_p3
+disk 5 64000/0xfa00/0x5 esdisk CLAIMED DEVICE online HP 36.4
+GST336753LC
+0/1/1/1.0x2.0x0
+# mksf -C disk -I 5 /dev/disk/disk4
+# mksf -C disk -I 5 -r /dev/rdisk/disk4
+# ioscan -m lun
+Class I Lun H/W Path Driver S/W State H/W Type Health Description
+======================================================================
+disk 2 64000/0xfa00/0x0 esdisk CLAIMED DEVICE online TEAC
+DV-28E-C
+0/0/2/0.0.0x0.0x0
+/dev/disk/disk2 /dev/rdisk/disk2
+disk 3 64000/0xfa00/0x1 esdisk CLAIMED DEVICE online HP 36.4
+GST336753LC
+0/1/1/0.0x1.0x0
+/dev/disk/disk3 /dev/rdisk/disk3
+/dev/disk/disk3_p1 /dev/rdisk/disk3_p1
+/dev/disk/disk3_p2 /dev/rdisk/disk3_p2
+/dev/disk/disk3_p3 /dev/rdisk/disk3_p3
+disk 5 64000/0xfa00/0x5 esdisk CLAIMED DEVICE online HP 36.4
+GST336753LC
+0/1/1/1.0x2.0x0
+/dev/disk/disk4 /dev/rdisk/disk4
+
+如果更换硬盘，还想使用原来的设备名，可以使用io_redirect_dsf命令。因为换上的新硬盘，系统会分配一个新的设备名。
+# io_redirect_dsf –d /dev/disk/disk3 –n /dev/disk/disk1
+
