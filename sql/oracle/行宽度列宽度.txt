@@ -1,0 +1,3 @@
+set pagesize 300
+set linesize 300
+col (column) format a10(×Ö¶ÎÏÔÊ¾£©

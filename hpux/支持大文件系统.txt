@@ -1,0 +1,99 @@
+  #swlist -l product | grep -i jfs
+  JFS                   B.11.31        Base VxFS File System 4.1 for HP-UX
+
+
+
+那就是说明这个系统没有OnlineJFS了。
+
+有的话应该如下：
+# swlist -l product | grep -i onlinejfs
+  AONLINEJFS            B.05.00.02     OnlineJFS Integration Product
+  OnlineJFS01           5.0.1          Online features of the VxFS File System
+
+
+HPUX 的onlineJFS在线扩展文件系统
+操作系统为BOE环境，默认是不带OnLineJFS套件，必须额外安装。
+
+检查是否有onlinejfs：
+swlist -l product | grep -i online
+swlist -l product | grep -i vxfs
+有的话，结果会显示：
+OnlineJFS             B.11.31        Online features of the VxFS File System 
+否则就没有
+
+安装OnLineJFS过程如下：
+
+1)上传安装包到目标主机
+
+[~]$ ls -l
+总用量 349980
+-rw-r--r-- 1 test test 129229616 2月 14 17:32 MirrorDisk.tar.gz
+-rw-r--r-- 1 test test 228786074 2月 13 16:53 OnLineJFS.tar.gz
+[~]$ 
+[~]$ ftp xx.xx.xx.xx
+
+2)把OnLineJFS.tar.gz解压到/tmp/OnLineJFS目录下
+
+[/]#ls -l /tmp/OnLineJFS
+total 304
+dr-x------ 2 root sys 96 Feb 13 15:51 B3929EA
+dr-x------ 2 root sys 96 Feb 13 15:51 Base-VXFS
+dr-x------ 2 root sys 96 Feb 13 15:51 FEATURE11i
+dr-x------ 2 root sys 96 Feb 13 15:51 HWEnable11i
+dr-x------ 6 root sys 8192 Feb 13 15:55 JFS
+dr-x------ 8 root sys 8192 Feb 13 15:51 Networking
+dr-x------ 10 root sys 8192 Feb 13 15:54 OS-Core
+dr-x------ 3 root sys 96 Feb 13 15:58 OnlineJFS
+......
+......
+
+3)安装
+
+[/]#swinstal -s /tmp/OnLineJFS
+
+4)查看安装是否成功
+
+[/]#swlist | grep -i online
+B3929EA B.11.31 HP OnLineJFS (Server) 
+OnlineDiag B.11.31.04.05 HPUX 11.31 Support Tools Bundle, September 2008
+
+下面以在线扩展/home文件系统为例说明操作过程：
+
+1)查看/home文件系统对应的LV名称
+
+[/]#bdf /home
+Filesystem kbytes used avail %used Mounted on
+/dev/vg00/lvol4 262144 5792 254360 2% /home
+
+2)查看/dev/vg00/lvol4大小
+
+[/]#lvdisplay /dev/vg00/lvol4 | grep "LV Size"
+LV Size (Mbytes) 256
+
+从上面结果可知，/dev/vg00/lvol4逻辑卷大小为256M，现在要扩展到320M
+
+3)先扩展/dev/vg00/lvol4
+
+[/]#lvextend -L 320 /dev/vg00/lvol4
+Logical volume "/dev/vg00/lvol4" has been successfully extended.
+Volume Group configuration for /dev/vg00 has been saved in /etc/lvmconf/vg00.conf
+
+4)查看LV是否已扩展到320M
+
+[/]#lvdisplay /dev/vg00/lvol4 | grep "LV Size"
+LV Size (Mbytes) 320
+
+5)扩展/home文件系统
+
+[/]#fsadm -F vxfs -b 320M /home                              （fsadm -b 320M /home）
+vxfs fsadm: V-3-23585: /dev/vg00/rlvol4 is currently 262144 sectors - size will be increased
+
+注：其中的32M是扩展后整个文件系统的大小，也就是LV的大小。
+
+6)查看/home文件系统是否已扩展到320M
+
+[/]#bdf /home
+Filesystem kbytes used avail %used Mounted on
+/dev/vg00/lvol4 327680 5800 319376 2% /home
+
+由上可知，在线扩展成功。

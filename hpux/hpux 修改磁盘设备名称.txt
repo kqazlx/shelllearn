@@ -52,6 +52,29 @@ ioscan -m lun 查看路径
 # io_redirect_dsf –d /dev/disk/disk3 –n /dev/disk/disk1
 
 
+HP mknod修改不同节点名字不同的相同盘
+原创 Oracle 作者：passion_of_data 时间：2016-11-23 10:48:14  319  0
+存储配置
+HPUX直接在裸盘（/dev/rdisk/*）上建ASM DISKGROUP（未使用VCS等第三方卷管理工具）时，
+如果进行存储扩容或者其他原因需要重新扫描认盘的时候执行insf –e命令，会导致裸磁盘权限属主发生变更,从而导致数据库down机。
+注：安装GI后，裸盘权限一般为grid:asmadmin,权限660，执行insf –e后，权限会变成bin:sys  640 
+
+
+解决方案(强制要求)：
+1、	确认所有盘为共享盘，对比磁盘WWID,WWID相同则说明是共享磁盘
+scsimgr lun_map -D /dev/rdisk/disk25 | grep WWID
+2、	重新创建设备
+ls –l /dev/rdsk/disk25 
+crw-r----- 1 bin sys 23 0x000019 Jan 16 12:16 /dev/rdisk/disk25
+
+
+说明：
+主设备号：23，从设备号：0x000019
+    
+mknod /dev/oracle/asmdisk1 c 23 0x000019
+chown grid:asmadmin /dev/oracle/asmdisk1
+注意：即便在两个节点相同的磁盘设备是共享盘，也有可能主从设备号不是一致的，所以在monod命令时需小心注意。
+在安装GI时，修改asm_diskstring=’/dev/oracle/*’
 
 
 
